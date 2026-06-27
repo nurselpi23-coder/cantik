@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Love Quest 💕</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ CSS VARIABLES (TOKEN SYSTEM) ============ */
+:root{
+  --night: #241531;
+  --night-deep: #160d20;
+  --plum: #4a2545;
+  --rose: #d98ea0;
+  --rose-soft: #f0bfc9;
+  --burgundy: #6b2737;
+  --burgundy-deep: #4a1726;
+  --blush: #fff3f0;
+  --cream: #fdf6ef;
+  --gold: #e8b96a;
+  --gold-soft: #f3d9a4;
+  --ink: #3a2230;
+  --white: #ffffff;
+
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Poppins', sans-serif;
+  --font-script: 'Caveat', cursive;
+
+  --shadow-soft: 0 20px 60px rgba(74, 23, 38, 0.25);
+  --shadow-deep: 0 30px 80px rgba(22, 13, 32, 0.5);
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{
+  width:100%; height:100%;
+  font-family: var(--font-body);
+  background: var(--night);
+  color: var(--ink);
+  overflow:hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select:none;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:none;}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+}
+
+/* Heart cursor */
+body{ cursor: default; }
+.heart-cursor{
+  position:fixed; top:0; left:0; width:22px; height:22px;
+  pointer-events:none; z-index:9999; transform:translate(-50%,-50%);
+  font-size:18px; opacity:0; transition:opacity .2s;
+}
+
+#app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+
+/* ============ SCENE SYSTEM ============ */
+.scene{
+  position:absolute; inset:0;
+  display:none;
+  align-items:center; justify-content:center;
+  flex-direction:column;
+  width:100%; height:100%;
+  opacity:0;
+}
+.scene.active{ display:flex; animation: sceneFadeIn 0.9s ease forwards; }
+@keyframes sceneFadeIn{ from{opacity:0; transform:scale(1.02);} to{opacity:1; transform:scale(1);} }
+
+/* Root-cause fix: every direct child of a scene except the background layer
+   must sit in its own stacking context above .night-bg, regardless of
+   whether each element remembers to set position/z-index inline. */
+.scene > *:not(.night-bg){
+  position:relative;
+  z-index:5;
+}
+
+.scene-fadeout{ animation: sceneFadeOut 0.5s ease forwards !important; }
+@keyframes sceneFadeOut{ from{opacity:1;} to{opacity:0;} }
+
+/* ============ STARRY NIGHT BACKDROP (used in several scenes) ============ */
+.night-bg{
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at top, var(--plum) 0%, var(--night) 55%, var(--night-deep) 100%);
+  overflow:hidden;
+}
+.star{
+  position:absolute; background:#fff; border-radius:50%;
+  opacity:0.8; animation: twinkle 2.4s ease-in-out infinite;
+}
+@keyframes twinkle{ 0%,100%{opacity:0.25; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.2);} }
+.aurora{
+  position:absolute; inset:-20% -20% auto -20%; height:60%;
+  background: linear-gradient(120deg, transparent, rgba(216,142,160,0.18), transparent, rgba(232,185,106,0.12), transparent);
+  filter: blur(40px);
+  animation: auroraMove 14s ease-in-out infinite alternate;
+}
+@keyframes auroraMove{ from{ transform: translateX(-5%) rotate(-2deg);} to{ transform: translateX(5%) rotate(2deg);} }
+
+/* Floating petals ambient */
+.petal{
+  position:absolute; top:-5%;
+  width:14px; height:14px;
+  background: var(--rose-soft);
+  border-radius: 0 50% 50% 50%;
+  opacity:0.75;
+  animation-name: petalFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes petalFall{
+  0%{ transform: translateY(-10vh) translateX(0) rotate(0deg); }
+  100%{ transform: translateY(110vh) translateX(40px) rotate(360deg); }
+}
+
+/* Floating hearts ambient (small particles) */
+.heart-particle{
+  position:absolute; bottom:-5%;
+  font-size: 14px; opacity:0.7; color: var(--rose-soft);
+  animation-name: heartRise; animation-timing-function: ease-in;
+  animation-iteration-count: infinite; pointer-events:none;
+}
+@keyframes heartRise{
+  0%{ transform: translateY(0) translateX(0) scale(0.8); opacity:0; }
+  10%{ opacity:0.8; }
+  100%{ transform: translateY(-110vh) translateX(20px) scale(1.1); opacity:0; }
+}
+
+/* ============ BOOK / PAGE COMPONENT (signature element) ============ */
+.book-wrap{
+  position:relative; z-index:5;
+  width:min(640px, 90vw);
+  max-height: 86vh;
+  display:flex; flex-direction:column;
+  align-items:center;
+}
+.book-page{
+  background: linear-gradient(160deg, var(--cream) 0%, var(--blush) 100%);
+  border-radius: 14px;
+  box-shadow: var(--shadow-deep);
+  padding: 40px 36px;
+  width:100%;
+  max-height: 80vh;
+  overflow-y:auto;
+  position:relative;
+  border: 1px solid rgba(232,185,106,0.4);
+}
+.book-page::-webkit-scrollbar{ width:5px; }
+.book-page::-webkit-scrollbar-thumb{ background: var(--rose); border-radius:4px; }
+.book-page::before{
+  content:'';
+  position:absolute; left:0; top:14px; bottom:14px; width:3px;
+  background: linear-gradient(180deg, transparent, var(--gold-soft), transparent);
+  opacity:0.6;
+}
+.page-eyebrow{
+  font-size: 12px; letter-spacing: 3px; text-transform:uppercase;
+  color: var(--rose); font-weight:600; margin-bottom:8px; text-align:center;
+}
+.page-title{
+  font-family: var(--font-display); font-weight:700;
+  font-size: clamp(26px, 4vw, 36px);
+  color: var(--burgundy); text-align:center; margin-bottom:6px;
+  line-height:1.2;
+}
+.page-sub{
+  text-align:center; color: var(--ink); opacity:0.65; font-size:14px; margin-bottom:22px;
+}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding: 14px 32px;
+  border-radius: 100px;
+  font-weight:600; font-size:15px;
+  background: linear-gradient(135deg, var(--burgundy), var(--burgundy-deep));
+  color: var(--blush);
+  box-shadow: 0 10px 24px rgba(107,39,55,0.4);
+  transition: transform .25s ease, box-shadow .25s ease;
+  letter-spacing:0.3px;
+}
+.btn:hover{ transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 30px rgba(107,39,55,0.5); }
+.btn:active{ transform: translateY(0) scale(0.98); }
+.btn-ghost{
+  background: transparent; color: var(--rose);
+  border: 1.5px solid var(--rose-soft);
+  box-shadow:none;
+}
+.btn-ghost:hover{ background: rgba(216,142,160,0.08); }
+.btn-gold{ background: linear-gradient(135deg, var(--gold), #d9a04e); color: var(--burgundy-deep); }
+.btn:focus-visible{ outline: 3px solid var(--gold); outline-offset:3px; }
+
+/* ============ SCENE 1: LOADING ============ */
+#scene-loading{ background: var(--night); }
+.loading-heart{
+  font-size: 70px;
+  animation: heartbeat 1.1s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(216,142,160,0.6));
+  margin-bottom: 28px;
+}
+@keyframes heartbeat{ 0%,100%{transform:scale(1);} 25%{transform:scale(1.18);} 40%{transform:scale(0.95);} 55%{transform:scale(1.12);} 70%{transform:scale(1);} }
+.loading-label{ color: var(--rose-soft); font-family:var(--font-display); font-style:italic; font-size:18px; margin-bottom:18px; letter-spacing:0.5px;}
+.loading-bar-track{
+  width: 240px; height:6px; background: rgba(255,255,255,0.12); border-radius:10px; overflow:hidden;
+}
+.loading-bar-fill{
+  height:100%; width:0%; border-radius:10px;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  transition: width 0.2s ease;
+}
+.loading-pct{ margin-top:10px; color: var(--rose-soft); font-size:13px; letter-spacing:2px; }
+.loading-welcome{
+  font-family: var(--font-display); font-style:italic; font-weight:600;
+  font-size: clamp(28px, 5vw, 42px);
+  color: var(--gold-soft);
+  text-align:center;
+  opacity:0;
+  text-shadow: 0 0 30px rgba(232,185,106,0.4);
+}
+.loading-welcome.show{ animation: welcomeIn 1.4s ease forwards; }
+@keyframes welcomeIn{ from{opacity:0; transform:translateY(14px) scale(0.96);} to{opacity:1; transform:translateY(0) scale(1);} }
+.tap-hint{ margin-top:30px; color: rgba(255,255,255,0.5); font-size:13px; opacity:0; animation: hintPulse 1.8s ease-in-out infinite; animation-delay:1.6s; }
+@keyframes hintPulse{ 0%,100%{opacity:0;} 50%{opacity:0.7;} }
+
+/* ============ SCENE 2: GREETING (typed lines) ============ */
+.typed-lines{
+  display:flex; flex-direction:column; gap:14px; align-items:center;
+  min-height: 160px; justify-content:center; z-index:5; padding: 0 24px;
+}
+.typed-line{
+  font-family: var(--font-display); font-style:italic;
+  font-size: clamp(20px, 4vw, 28px);
+  color: var(--blush); text-align:center; line-height:1.4;
+  opacity:0;
+}
+.typed-line.show{ animation: lineIn 0.8s ease forwards; }
+@keyframes lineIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+/* ============ LEVEL SCENES SHARED ============ */
+.level-tag{
+  display:inline-block; padding:5px 16px; border-radius:100px;
+  background: rgba(216,142,160,0.15); color: var(--burgundy);
+  font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  margin: 0 auto 10px; text-align:center;
+}
+.progress-track{
+  width:100%; height:8px; background: rgba(107,39,55,0.1); border-radius:10px; overflow:hidden; margin: 16px 0 22px;
+}
+.progress-fill{
+  height:100%; border-radius:10px;
+  background: linear-gradient(90deg, var(--rose), var(--burgundy));
+  width:0%; transition: width 0.4s ease;
+}
+.progress-label{ text-align:center; font-size:12px; color:var(--ink); opacity:0.55; margin-top:-14px; margin-bottom:18px; }
+
+/* Quiz options */
+.quiz-question{
+  font-family: var(--font-display); font-weight:600;
+  font-size: clamp(19px, 3.4vw, 24px);
+  color: var(--burgundy); text-align:center; margin-bottom:22px; line-height:1.35;
+}
+.option-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.option-grid.single-col{ grid-template-columns: 1fr; }
+.option-btn{
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding: 18px 12px;
+  background: var(--white);
+  border: 2px solid rgba(216,142,160,0.25);
+  border-radius: 16px;
+  font-size:14px; font-weight:500; color: var(--ink);
+  transition: all .2s ease;
+  text-align:center;
+}
+.option-btn .emoji{ font-size:28px; }
+.option-btn:hover{ border-color: var(--rose); transform: translateY(-3px); box-shadow: 0 8px 18px rgba(216,142,160,0.25); }
+.option-btn.selected{ background: linear-gradient(135deg, var(--rose-soft), var(--rose)); border-color: var(--burgundy); color: var(--burgundy-deep); font-weight:700; }
+.option-btn.text-only{ flex-direction:row; justify-content:flex-start; padding:16px 20px; }
+
+.level-complete-badge{
+  text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.complete-heart{ font-size:54px; animation: popIn 0.6s ease; }
+@keyframes popIn{ 0%{transform:scale(0);} 60%{transform:scale(1.25);} 100%{transform:scale(1);} }
+.complete-title{ font-family:var(--font-display); font-weight:700; font-size:26px; color: var(--burgundy); }
+.complete-sub{ color: var(--ink); opacity:0.6; font-size:14px; }
+
+/* ============ LOVE POINT HUD ============ */
+.hud{
+  position:fixed; top:18px; right:18px; z-index:50;
+  display:flex; align-items:center; gap:6px;
+  background: rgba(36,21,49,0.55);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px; border-radius:100px;
+  color: var(--gold-soft); font-weight:600; font-size:14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  opacity:0; transition: opacity 0.4s ease;
+}
+.hud.show{ opacity:1; }
+
+/* ============ MINI GAME: CATCH HEART ============ */
+.game-frame{
+  position:relative; width: min(560px,88vw); height: 60vh; max-height:480px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
+  border-radius:20px; overflow:hidden;
+  border: 2px solid rgba(255,255,255,0.15);
+}
+.falling-item{
+  position:absolute; top:-40px; font-size:30px;
+  cursor:pointer; user-select:none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  animation-timing-function: linear;
+  animation-name: fallDown;
+}
+@keyframes fallDown{ from{ top:-40px; } to{ top:100%; } }
+.score-float{
+  position:absolute; font-weight:800; font-size:18px; pointer-events:none;
+  animation: floatUp 0.8s ease forwards;
+}
+@keyframes floatUp{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-40px);} }
+.game-hud-row{ display:flex; justify-content:space-between; align-items:center; width:min(560px,88vw); margin-bottom:14px; color: var(--blush); font-weight:600; font-size:14px; }
+.game-timer-pill, .game-score-pill{ background: rgba(255,255,255,0.12); padding:6px 14px; border-radius:100px; }
+
+/* ============ MEMORY GAME ============ */
+.memory-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; width: min(420px,82vw); margin: 0 auto; }
+.memory-card{
+  aspect-ratio:1; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg, var(--burgundy), var(--burgundy-deep));
+  font-size:26px; cursor:pointer; color:transparent;
+  transition: transform 0.4s; transform-style: preserve-3d;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+.memory-card.flipped{ background: var(--white); color:inherit; transform: rotateY(180deg) scale(1.02); }
+.memory-card.flipped span{ display:inline-block; transform: rotateY(180deg); }
+.memory-card.matched{ background: linear-gradient(135deg, var(--rose-soft), var(--gold-soft)); color:inherit; opacity:0.85; cursor:default; }
+.memory-card.matched span{ transform:none; }
+
+/* ============ LUCKY BOX ============ */
+.box-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; width:min(360px,80vw); margin:0 auto; }
+.lucky-box{
+  aspect-ratio:1; border-radius:16px; font-size:30px;
+  display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(150deg, var(--gold-soft), var(--gold));
+  box-shadow: 0 8px 16px rgba(232,185,106,0.35);
+  transition: transform 0.25s;
+}
+.lucky-box:hover{ transform: translateY(-4px) rotate(-2deg); }
+.lucky-box.opened{ background: var(--white); transform:scale(1.05); cursor:default; }
+.lucky-box.opened:hover{ transform:scale(1.05); }
+
+/* ============ CHOICE CARDS (level 6) ============ */
+.choice-scenario{ text-align:center; margin-bottom: 20px; }
+.choice-emoji-big{ font-size:54px; margin-bottom:8px; }
+.choice-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+
+/* ============ RAPID QUIZ (level 7) ============ */
+.rapid-timer-ring{ width:64px; height:64px; margin: 0 auto 16px; position:relative; }
+.rapid-timer-ring svg{ transform: rotate(-90deg); }
+.rapid-timer-ring circle{ fill:none; stroke-width:6; }
+.rapid-timer-bg{ stroke: rgba(107,39,55,0.12); }
+.rapid-timer-fg{ stroke: var(--burgundy); stroke-linecap:round; transition: stroke-dashoffset 0.1s linear; }
+.rapid-timer-num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--burgundy); font-size:18px; }
+
+/* ============ PHOTO PUZZLE (level 8) ============ */
+.puzzle-board{ display:grid; grid-template-columns: repeat(3, 1fr); gap:4px; width:min(320px,78vw); margin:0 auto; aspect-ratio:1; }
+.puzzle-piece{
+  background-size: 300% 300%;
+  border-radius:6px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition: outline 0.2s;
+  outline: 2px solid transparent;
+}
+.puzzle-piece.selected-piece{ outline: 3px solid var(--burgundy); }
+.puzzle-placeholder-icon{ font-size:22px; opacity:0.5; }
+
+/* ============ SURPRISE (level 9) ============ */
+#scene-surprise{ background: var(--night-deep); }
+.surprise-text{ font-family:var(--font-display); font-style:italic; color: var(--rose-soft); font-size: clamp(20px,4vw,28px); text-align:center; opacity:0; animation: lineIn 1s ease forwards; }
+.photo-frame{
+  width:min(320px,80vw); aspect-ratio:4/5;
+  background: linear-gradient(160deg, var(--plum), var(--night));
+  border-radius:16px; border: 4px solid var(--gold-soft);
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:10px; color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 60px rgba(232,185,106,0.25);
+  opacity:0; transform: scale(0.9);
+  animation: photoReveal 1.4s ease forwards;
+  animation-delay: 0.6s;
+  font-size:13px; text-align:center; padding:20px;
+}
+@keyframes photoReveal{ to{ opacity:1; transform:scale(1); } }
+.photo-frame img{ width:100%; height:100%; object-fit:cover; border-radius:12px; }
+
+/* ============ LOVE LETTER (level 10) ============ */
+.letter-text{
+  font-family: var(--font-script); font-size: clamp(20px,3.6vw,26px);
+  color: var(--ink); line-height:1.7; white-space:pre-wrap;
+  min-height: 260px;
+}
+.letter-cursor{ display:inline-block; width:2px; background:var(--burgundy); animation: blink 0.8s step-end infinite; margin-left:2px; }
+@keyframes blink{ 50%{ opacity:0; } }
+.skip-hint{ position:absolute; bottom:14px; right:18px; font-size:11px; color: var(--ink); opacity:0.35; }
+
+/* ============ FINAL QUESTION ============ */
+.final-q-wrap{ position:relative; width:100%; height:100%; }
+.no-btn{ position:fixed; z-index:30; transition: transform 0.25s ease; }
+
+/* ============ ENDING ============ */
+#scene-ending{ background: radial-gradient(ellipse at center, var(--plum) 0%, var(--night-deep) 100%); overflow:hidden; }
+.ending-content{ z-index:10; text-align:center; }
+.ending-title{ font-family:var(--font-display); font-style:italic; font-weight:700; font-size: clamp(36px,7vw,58px); color: var(--gold-soft); text-shadow: 0 0 40px rgba(232,185,106,0.5); margin-bottom:8px; }
+.ending-sub{ font-family:var(--font-script); font-size: clamp(22px,4vw,30px); color: var(--rose-soft); }
+.confetti-piece, .balloon, .firework{ position:absolute; pointer-events:none; }
+.confetti-piece{ width:8px; height:14px; top:-20px; animation-name: confettiFall; animation-timing-function: linear; }
+@keyframes confettiFall{ to{ transform: translateY(110vh) rotate(540deg); opacity:0.3; } }
+.balloon{ bottom:-20%; font-size:38px; animation-name: balloonRise; animation-timing-function: ease-in; }
+@keyframes balloonRise{ to{ transform: translateY(-130vh) translateX(20px); } }
+.firework-spark{ position:absolute; width:5px; height:5px; border-radius:50%; animation: sparkOut 1s ease-out forwards; }
+@keyframes sparkOut{ to{ transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; } }
+
+/* ============ NAV / UTILITY ============ */
+.scene-footer{ display:flex; justify-content:center; gap:12px; margin-top:18px; flex-wrap:wrap; }
+.flex-center{ display:flex; align-items:center; justify-content:center; }
+.text-input{
+  width:100%; padding:13px 16px; border-radius:12px; border:2px solid rgba(216,142,160,0.3);
+  font-family:inherit; font-size:15px; color:var(--ink); background:var(--white);
+}
+.text-input:focus{ outline:none; border-color: var(--rose); }
+.field-label{ font-size:13px; font-weight:600; color: var(--burgundy); margin-bottom:6px; display:block; }
+.field-group{ margin-bottom:16px; }
+
+@media (max-width:480px){
+  .book-page{ padding:28px 20px; }
+  .option-grid{ grid-template-columns: 1fr 1fr; gap:8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="heart-cursor" id="heartCursor">❤️</div>
+<div class="hud" id="hud">💗 <span id="hudScore">0</span> Love Points</div>
+
+<div id="app">
+
+  <!-- ============ SCENE: LOADING ============ -->
+  <section class="scene active" id="scene-loading">
+    <div class="night-bg" id="loadingStars"></div>
+    <div class="loading-heart" id="loadingHeart">❤️</div>
+    <div class="loading-label" id="loadingLabel">Loading Love...</div>
+    <div class="loading-bar-track"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+    <div class="loading-pct" id="loadingPct">0%</div>
+    <div class="loading-welcome" id="loadingWelcome">Welcome My Princess</div>
+    <div class="tap-hint" id="tapHint">Sentuh layar untuk lanjut</div>
+  </section>
+
+  <!-- ============ MUSICK ============ -->
+<audio id="bgMusic" loop>
+    <source src="assets/lagu-kita.mp3" type="audio/mpeg">
+    Browser Anda tidak mendukung audio.
+</audio>
+
+<script>
+const music = document.getElementById("bgMusic");
+
+document.body.addEventListener("click", () => {
+    music.play().catch(err => console.log(err));
+}, { once: true });
+</script>
+
+  <!-- ============ SCENE: GREETING ============ -->
+  <section class="scene" id="scene-greeting">
+    <div class="night-bg"><div class="aurora"></div></div>
+    <div class="typed-lines" id="typedLines"></div>
+    <button class="btn btn-gold" id="btnStartJourney" style="z-index:5; opacity:0;">Mulai ❤️</button>
+  </section>
+
+  <!-- ============ SCENE: BOOK INTRO ============ -->
+  <section class="scene" id="scene-bookintro">
+    <div class="night-bg"><div class="aurora"></div></div>
+    <div class="book-wrap">
+      <div class="book-page" style="text-align:center;">
+        <div class="page-eyebrow">Love Quest</div>
+        <div class="page-title">Sebuah Perjalanan<br>Menuju Hatimu</div>
+        <p class="page-sub" style="margin-bottom:24px;">10 level kecil, satu tujuan besar: membuatmu tersenyum 🌸</p>
+        <div style="font-size:46px; margin-bottom:20px;">📖❤️</div>
+        <button class="btn" id="btnEnterLevel1">Buka Halaman Pertama</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 1 - ABOUT YOU QUIZ ============ -->
+  <section class="scene" id="scene-level1">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page">
+        <div class="level-tag">Level 1 · Tentang Kamu</div>
+        <div class="progress-track"><div class="progress-fill" id="l1ProgressFill"></div></div>
+        <div class="progress-label" id="l1ProgressLabel">Soal 1 dari 8</div>
+        <div id="l1QuizArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 1 COMPLETE ============ -->
+  <section class="scene" id="scene-level1complete">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page level-complete-badge">
+        <div class="complete-heart">❤️</div>
+        <div class="complete-title">Congratulation!</div>
+        <div class="complete-sub">Level 1 Complete — sekarang aku makin kenal kamu 🥰</div>
+        <button class="btn" id="btnToLevel2" style="margin-top:10px;">Lanjut ke Level 2 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 2 - ABOUT US ============ -->
+  <section class="scene" id="scene-level2">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page">
+        <div class="level-tag">Level 2 · Tentang Kita</div>
+        <div class="progress-track"><div class="progress-fill" id="l2ProgressFill"></div></div>
+        <div class="progress-label" id="l2ProgressLabel">Soal 1 dari 8</div>
+        <div id="l2QuizArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-level2complete">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page level-complete-badge">
+        <div class="complete-heart">💞</div>
+        <div class="complete-title">Manis Sekali!</div>
+        <div class="complete-sub">Level 2 Complete — kenangan kita makin lengkap</div>
+        <button class="btn" id="btnToLevel3" style="margin-top:10px;">Lanjut ke Mini Game →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 3 - CATCH HEART ============ -->
+  <section class="scene" id="scene-level3">
+    <div class="night-bg"></div>
+    <div class="level-tag" style="position:relative; z-index:5;">Level 3 · Tangkap Hati</div>
+    <p style="z-index:5; color:var(--rose-soft); font-size:13px; margin:6px 0 14px; text-align:center; max-width:80vw;">Klik / sentuh ❤️ yang jatuh. Hindari 💔!</p>
+    <div class="game-hud-row">
+      <div class="game-timer-pill">⏱ <span id="l3Timer">20</span>s</div>
+      <div class="game-score-pill">💗 <span id="l3Score">0</span></div>
+    </div>
+    <div class="game-frame" id="l3GameFrame"></div>
+    <button class="btn btn-ghost" id="btnStartCatch" style="margin-top:18px; z-index:5;">Mulai Permainan</button>
+  </section>
+
+  <section class="scene" id="scene-level3complete">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page level-complete-badge">
+        <div class="complete-heart">🎯</div>
+        <div class="complete-title" id="l3ResultTitle">Keren!</div>
+        <div class="complete-sub" id="l3ResultSub">Kamu mengumpulkan banyak cinta hari ini</div>
+        <button class="btn" id="btnToLevel4" style="margin-top:10px;">Lanjut ke Memory Game →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 4 - MEMORY GAME ============ -->
+  <section class="scene" id="scene-level4">
+    <div class="night-bg"></div>
+    <div class="level-tag" style="position:relative; z-index:5;">Level 4 · Memory Game</div>
+    <p style="z-index:5; color:var(--rose-soft); font-size:13px; margin:6px 0 16px; text-align:center;">Cari semua pasangannya 💕</p>
+    <div class="memory-grid" id="memoryGrid"></div>
+  </section>
+
+  <section class="scene" id="scene-level4complete">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page level-complete-badge">
+        <div class="complete-heart">🧠💕</div>
+        <div class="complete-title">Memorinya Bagus!</div>
+        <div class="complete-sub">Sama seperti caramu selalu mengingat hal-hal kecil tentangku</div>
+        <button class="btn" id="btnToLevel5" style="margin-top:10px;">Lanjut ke Lucky Box →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 5 - LUCKY BOX ============ -->
+  <section class="scene" id="scene-level5">
+    <div class="night-bg"></div>
+    <div class="level-tag" style="position:relative; z-index:5;">Level 5 · Lucky Box</div>
+    <p style="z-index:5; color:var(--rose-soft); font-size:13px; margin:6px 0 16px; text-align:center;">Pilih satu kotak... isinya kejutan 🎁</p>
+    <div class="box-grid" id="luckyBoxGrid"></div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 6 - FUNNY CHOICES ============ -->
+  <section class="scene" id="scene-level6">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page">
+        <div class="level-tag">Level 6 · Pilihan Lucu</div>
+        <div id="l6Content"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 7 - RAPID QUIZ ============ -->
+  <section class="scene" id="scene-level7">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page" style="text-align:center;">
+        <div class="level-tag">Level 7 · Love Meter</div>
+        <div class="rapid-timer-ring">
+          <svg width="64" height="64"><circle class="rapid-timer-bg" cx="32" cy="32" r="27"></circle><circle class="rapid-timer-fg" id="rapidRing" cx="32" cy="32" r="27" stroke-dasharray="170" stroke-dashoffset="0"></circle></svg>
+          <div class="rapid-timer-num" id="rapidTimerNum">5</div>
+        </div>
+        <div class="progress-label" id="l7ProgressLabel" style="margin-bottom:14px;">Soal 1 dari 10</div>
+        <div id="l7QuizArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-level7complete">
+    <div class="night-bg"></div>
+    <div class="book-wrap">
+      <div class="book-page level-complete-badge">
+        <div class="complete-heart">⚡❤️</div>
+        <div class="complete-title">Love Meter: <span id="l7FinalScore">100</span>%</div>
+        <div class="complete-sub">Cepat dan penuh cinta — pas seperti kamu</div>
+        <button class="btn" id="btnToLevel8" style="margin-top:10px;">Lanjut ke Puzzle Foto →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 8 - PHOTO PUZZLE ============ -->
+  <section class="scene" id="scene-level8">
+    <div class="night-bg"></div>
+    <div class="level-tag" style="position:relative; z-index:5;">Level 8 · Puzzle Foto</div>
+    <p style="z-index:5; color:var(--rose-soft); font-size:13px; margin:6px 0 16px; text-align:center; max-width:80vw;">Klik dua kotak untuk menukar posisinya, susun sampai jadi foto kita 🧩</p>
+    <div class="puzzle-board" id="puzzleBoard"></div>
+    <button class="btn btn-ghost" id="btnSkipPuzzle" style="margin-top:18px; z-index:5;">Selesai →</button>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 9 - SURPRISE ============ -->
+  <section class="scene" id="scene-surprise">
+    <div class="night-bg" id="surpriseStars" style="background:var(--night-deep);"></div>
+    <div class="surprise-text" id="surpriseText1" style="z-index:5;">Aku punya sesuatu...</div>
+    <div class="photo-frame" id="photoFrame" style="z-index:5; margin-top:24px; display:none;">
+      <div class="puzzle-placeholder-icon" style="font-size:34px;">📷</div>
+      <div>Letakkan fotomu di sini<br><span style="opacity:0.6; font-size:11px;">(ganti src di CONFIG.photos)</span></div>
+    </div>
+    <button class="btn btn-gold" id="btnAfterSurprise" style="margin-top:30px; z-index:5; display:none;">Lanjut →</button>
+  </section>
+
+  <!-- ============ SCENE: LEVEL 10 - LOVE LETTER ============ -->
+  <section class="scene" id="scene-letter">
+    <div class="night-bg"><div class="aurora"></div></div>
+    <div class="book-wrap">
+      <div class="book-page" style="position:relative;">
+        <div class="page-eyebrow">Level 10</div>
+        <div class="page-title" style="margin-bottom:18px;">Surat Cinta</div>
+        <div class="letter-text" id="letterText"><span class="letter-cursor"></span></div>
+        <span class="skip-hint" id="skipLetterHint">ketuk untuk skip animasi</span>
+        <div class="scene-footer">
+          <button class="btn" id="btnAfterLetter" style="display:none;">Lanjut →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: FINAL QUESTION ============ -->
+  <section class="scene" id="scene-finalq">
+    <div class="night-bg"><div class="aurora"></div></div>
+    <div class="final-q-wrap">
+      <div class="book-wrap" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
+        <div class="book-page" style="text-align:center;">
+          <div style="font-size:44px; margin-bottom:14px;">💌</div>
+          <div class="page-title" id="finalQuestionText">Maukah kamu terus menjalani hari-hari indah bersamaku?</div>
+          <div class="scene-footer" style="margin-top:26px; position:relative; min-height:60px;">
+            <button class="btn" id="btnYes">❤️ YA 💕</button>
+            <button class="btn btn-ghost no-btn" id="btnNo">Tidak</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENE: ENDING ============ -->
+  <section class="scene" id="scene-ending">
+    <div id="endingEffects"></div>
+    <div class="ending-content">
+      <div class="ending-title" id="endingTitle">I Love You</div>
+      <div class="ending-sub" id="endingSub">Hari ini, besok, dan selamanya</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================================
+   LOVE QUEST — script.js
+   ---------------------------------------------------------------
+   ✏️ EDIT DI SINI: Semua teks personal (nama, tanggal, pertanyaan,
+   surat cinta, foto) ada di object CONFIG di bawah ini.
+   Kamu TIDAK perlu menyentuh kode di luar CONFIG untuk personalisasi dasar.
+   ========================================================================= */
+
+const CONFIG = {
+  partnerName: "Sayang",          // panggilan untuk pacarmu, contoh: "Dinda"
+  yourName: "pipi",                // namamu / panggilanmu
+
+  greetingLines: [
+    "Hai {partner} ❤️",
+    "Aku membuat sesuatu...",
+    "Khusus untukmu...",
+    "Mau bermain denganku?"
+  ],
+
+  // LEVEL 1 — Tentang Kamu (multiple choice, isi sesuka hati, min 4 soal)
+  level1Questions: [
+    { q: "Apa warna favoritmu?", options: [
+      { emoji: "🩷", label: "Pink" }, { emoji: "💜", label: "Ungu" },
+      { emoji: "💙", label: "Biru" }, { emoji: "🖤", label: "Hitam" }
+    ]},
+    { q: "Makanan favoritmu?", options: [
+      { emoji: "🍜", label: "Mie" }, { emoji: "🍕", label: "Pizza" },
+      { emoji: "🍗", label: "Ayam" }, { emoji: "🍔", label: "Burger" }
+    ]},
+    { q: "Minuman favoritmu?", options: [
+      { emoji: "🧋", label: "Boba" }, { emoji: "☕", label: "Kopi" },
+      { emoji: "🍹", label: "Jus" }, { emoji: "🥛", label: "Susu" }
+    ]},
+    { q: "Hobi yang paling kamu suka?", options: [
+      { emoji: "📖", label: "Membaca" }, { emoji: "🎮", label: "Main Game" },
+      { emoji: "🎵", label: "Musik" }, { emoji: "🎬", label: "Nonton" }
+    ]},
+    { q: "Kalau liburan, kamu pilih?", options: [
+      { emoji: "🏖", label: "Pantai" }, { emoji: "⛰", label: "Gunung" },
+      { emoji: "🏙", label: "Kota" }, { emoji: "🏡", label: "Rumah saja" }
+    ]},
+    { q: "Cuaca favoritmu?", options: [
+      { emoji: "☀️", label: "Cerah" }, { emoji: "🌧", label: "Hujan" },
+      { emoji: "❄️", label: "Dingin" }, { emoji: "🌅", label: "Sore hari" }
+    ]},
+    { q: "Hewan kesukaanmu?", options: [
+      { emoji: "🐱", label: "Kucing" }, { emoji: "🐶", label: "Anjing" },
+      { emoji: "🐰", label: "Kelinci" }, { emoji: "🐼", label: "Panda" }
+    ]},
+    { q: "Waktu favoritmu dalam sehari?", options: [
+      { emoji: "🌅", label: "Pagi" }, { emoji: "☀️", label: "Siang" },
+      { emoji: "🌇", label: "Sore" }, { emoji: "🌙", label: "Malam" }
+    ]}
+  ],
+
+  // LEVEL 2 — Tentang Kita (campur pilihan & teks bebas — edit sesuai cerita kalian)
+  level2Questions: [
+    { q: "Kapan pertama kali kita chat?", type: "text", placeholder: "Tulis tanggalnya di sini..." },
+    { q: "Kapan kita jadian?", type: "text", placeholder: "Tulis tanggalnya di sini..." },
+    { q: "Siapa yang paling manja?", type: "choice", options: [
+      { emoji: "🙋‍♀️", label: CONFIG_PARTNER_PLACEHOLDER() }, { emoji: "🙋‍♂️", label: "Aku" }, { emoji: "🤝", label: "Sama-sama" }
+    ]},
+    { q: "Siapa yang paling sering ngambek?", type: "choice", options: [
+      { emoji: "🙋‍♀️", label: CONFIG_PARTNER_PLACEHOLDER() }, { emoji: "🙋‍♂️", label: "Aku" }, { emoji: "🤝", label: "Sama-sama" }
+    ]},
+    { q: "Siapa yang paling lucu?", type: "choice", options: [
+      { emoji: "🙋‍♀️", label: CONFIG_PARTNER_PLACEHOLDER() }, { emoji: "🙋‍♂️", label: "Aku" }, { emoji: "🤝", label: "Sama-sama" }
+    ]},
+    { q: "Di mana tempat jalan pertama kita?", type: "text", placeholder: "Tulis tempatnya di sini..." },
+    { q: "Apa makanan pertama yang kita makan bareng?", type: "text", placeholder: "Tulis makanannya..." },
+    { q: "Lagu yang paling mengingatkanmu padaku?", type: "text", placeholder: "Tulis judul lagunya..." }
+  ],
+
+  // LEVEL 6 — Pilihan Lucu
+  funnyChoices: [
+    { scenario: "Kalau aku jadi kucing 🐱, kamu akan...", options: ["Peluk", "Kasih makan", "Adopsi", "Kabur 😂"] },
+    { scenario: "Kalau aku jadi ulat bulu 🐛, kamu akan...", options: ["Tetap sayang", "Jerit dulu baru sayang 😂", "Jauhi dulu", "Foto buat status"] },
+    { scenario: "Kalau aku ngambek tiba-tiba, kamu akan...", options: ["Tanya pelan-pelan", "Kasih cokelat", "Diemin dulu", "Peluk dari belakang"] }
+  ],
+
+  // LEVEL 7 — Love Meter rapid quiz (yes/no atau pilihan singkat)
+  rapidQuestions: [
+    "Apakah aku cakeppp hari ini?", "Apakah kamu kangen aku?", "Apakah aku lucu?",
+    "Apakah kamu suka kejutan ini?", "Apakah aku spesial untukmu?", "Apakah kamu mau lanjut?",
+    "Apakah hatimu berdebar?", "Apakah ini menyenangkan?", "Apakah kamu senyum sekarang?",
+    "Apakah kamu sayang aku?"
+  ],
+
+  // LEVEL 9 — teks sebelum foto muncul
+  surpriseLines: ["Aku punya sesuatu...", "Tunggu sebentar...", "Lihat ini..."],
+
+  // foto-foto (ganti path di bawah dengan foto kalian, taruh file di folder /assets/photos/)
+  photos: {
+    surprise: "assets/foto-1.jpeg", // contoh: "assets/photos/kita1.jpg" — kosongkan dulu jika belum ada
+    puzzle: "assets/foto-kita.jpeg"    // contoh: "assets/photos/kita2.jpg"
+  },
+
+  // LEVEL 10 — Surat Cinta (edit total sesuai isi hatimu)
+  loveLetter:
+`Hai Sayang...
+
+Terima kasih sudah bermain sampai sejauh ini.
+
+Sebenarnya, permainan ini bukan untuk menguji kamu.
+Tapi supaya aku bisa mengingat semua hal yang kamu sukai.
+
+Karena aku ingin terus belajar menjadi pasangan yang lebih baik untukmu.
+
+Aku mungkin belum sempurna, tapi setiap hari aku ingin membuatmu tersenyum.
+
+Semoga perjalanan kecil ini bisa menjadi kenangan manis untuk kita berdua.
+
+Aku sayang kamu, hari ini, besok, dan semoga selamanya. ❤️`,
+
+  finalQuestion: "Maukah kamu terus menjalani hari-hari indah bersamaku?",
+  endingTitle: "I Love You",
+  endingSub: "Hari ini, besok, dan selamanya"
+};
+
+function CONFIG_PARTNER_PLACEHOLDER(){ return "Pacarku"; }
+
+/* ===================== UTILS ===================== */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel, scope) => (scope || document).querySelectorAll(sel);
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+let lovePoints = 0;
+function addLove(n){
+  lovePoints += n;
+  if(lovePoints < 0) lovePoints = 0;
+  const el = $('#hudScore');
+  if(el) el.textContent = lovePoints;
+}
+
+function showScene(id){
+  $$('.scene').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  target.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ===================== HEART CURSOR (desktop only) ===================== */
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+if(!isTouchDevice){
+  const cursor = $('#heartCursor');
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    cursor.style.opacity = '0.85';
+  });
+  document.addEventListener('mouseleave', () => cursor.style.opacity = '0');
+} else {
+  $('#heartCursor').style.display = 'none';
+}
+
+/* ===================== AMBIENT: stars + petals + floating hearts ===================== */
+function spawnStars(container, count=60){
+  for(let i=0;i<count;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = rand(1,3);
+    s.style.width = size+'px'; s.style.height = size+'px';
+    s.style.left = rand(0,100)+'%'; s.style.top = rand(0,70)+'%';
+    s.style.animationDelay = rand(0,3)+'s';
+    s.style.animationDuration = rand(1.8,3.2)+'s';
+    container.appendChild(s);
+  }
+}
+function spawnPetals(container, count=10){
+  for(let i=0;i<count;i++){
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.style.left = rand(0,100)+'%';
+    p.style.animationDuration = rand(7,14)+'s';
+    p.style.animationDelay = rand(0,10)+'s';
+    p.style.opacity = rand(0.4,0.85);
+    const sz = rand(8,16);
+    p.style.width = sz+'px'; p.style.height = sz+'px';
+    container.appendChild(p);
+  }
+}
+function spawnHeartParticles(container, count=8){
+  const hearts = ['❤️','💕','💗','💖'];
+  for(let i=0;i<count;i++){
+    const h = document.createElement('div');
+    h.className = 'heart-particle';
+    h.textContent = choice(hearts);
+    h.style.left = rand(0,100)+'%';
+    h.style.animationDuration = rand(6,11)+'s';
+    h.style.animationDelay = rand(0,8)+'s';
+    h.style.fontSize = rand(10,20)+'px';
+    container.appendChild(h);
+  }
+}
+
+// init ambient on all night-bg containers
+$$('.night-bg').forEach(bg => {
+  spawnStars(bg, 50);
+  spawnPetals(bg, 8);
+  spawnHeartParticles(bg, 6);
+});
+
+/* =========================================================================
+   SCENE 1: LOADING
+   ========================================================================= */
+(function initLoading(){
+  let pct = 0;
+  const fill = $('#loadingBarFill');
+  const pctLabel = $('#loadingPct');
+  const heart = $('#loadingHeart');
+  const label = $('#loadingLabel');
+  const welcome = $('#loadingWelcome');
+  const tapHint = $('#tapHint');
+
+  const interval = setInterval(() => {
+    pct += Math.ceil(rand(4,12));
+    if(pct >= 100){ pct = 100; clearInterval(interval); onLoadDone(); }
+    fill.style.width = pct + '%';
+    pctLabel.textContent = pct + '%';
+  }, 180);
+
+  function onLoadDone(){
+    setTimeout(() => {
+      heart.style.display='none';
+      label.style.display='none';
+      $('.loading-bar-track').style.display='none';
+      pctLabel.style.display='none';
+      welcome.textContent = `Welcome My Princess`;
+      welcome.classList.add('show');
+      tapHint.style.opacity = '0';
+      setTimeout(()=> tapHint.style.transition='opacity .3s', 1200);
+      setTimeout(()=> tapHint.classList.add('shown'), 1300);
+    }, 300);
+  }
+
+  // tap anywhere to continue once welcome shown
+  $('#scene-loading').addEventListener('click', () => {
+    if(welcome.classList.contains('show')){
+      transitionTo('scene-greeting', initGreeting);
+    }
+  });
+})();
+
+function transitionTo(sceneId, afterFn){
+  const current = $('.scene.active');
+  current.classList.add('scene-fadeout');
+  setTimeout(() => {
+    current.classList.remove('scene-fadeout');
+    showScene(sceneId);
+    $('#hud').classList.add('show');
+    if(afterFn) afterFn();
+  }, 480);
+}
+
+/* =========================================================================
+   SCENE 2: GREETING (typed lines)
+   ========================================================================= */
+function initGreeting(){
+  const container = $('#typedLines');
+  container.innerHTML = '';
+  const lines = CONFIG.greetingLines.map(l => l.replace('{partner}', CONFIG.partnerName));
+  const startBtn = $('#btnStartJourney');
+  startBtn.style.opacity = '0';
+
+  lines.forEach((line, i) => {
+    const div = document.createElement('div');
+    div.className = 'typed-line';
+    div.textContent = line;
+    container.appendChild(div);
+    setTimeout(() => div.classList.add('show'), 600 + i*1100);
+  });
+
+  setTimeout(() => {
+    startBtn.style.transition = 'opacity .6s ease';
+    startBtn.style.opacity = '1';
+  }, 600 + lines.length*1100 + 200);
+}
+$('#btnStartJourney').addEventListener('click', () => transitionTo('scene-bookintro'));
+$('#btnEnterLevel1').addEventListener('click', () => transitionTo('scene-level1', initLevel1));
+
+/* =========================================================================
+   LEVEL 1 — ABOUT YOU
+   ========================================================================= */
+let l1Index = 0;
+function initLevel1(){
+  l1Index = 0;
+  renderL1Question();
+}
+function renderL1Question(){
+  const total = CONFIG.level1Questions.length;
+  const area = $('#l1QuizArea');
+  $('#l1ProgressLabel').textContent = `Soal ${l1Index+1} dari ${total}`;
+  $('#l1ProgressFill').style.width = `${(l1Index/total)*100}%`;
+
+  const item = CONFIG.level1Questions[l1Index];
+  area.innerHTML = '';
+  const qEl = document.createElement('div');
+  qEl.className = 'quiz-question';
+  qEl.textContent = item.q;
+  area.appendChild(qEl);
+
+  const grid = document.createElement('div');
+  grid.className = 'option-grid';
+  item.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="emoji">${opt.emoji}</span><span>${opt.label}</span>`;
+    btn.addEventListener('click', () => {
+      $$('.option-btn', grid).forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      addLove(2);
+      setTimeout(() => {
+        l1Index++;
+        if(l1Index >= total){
+          $('#l1ProgressFill').style.width = '100%';
+          transitionTo('scene-level1complete');
+        } else {
+          renderL1Question();
+        }
+      }, 350);
+    });
+    grid.appendChild(btn);
+  });
+  area.appendChild(grid);
+}
+
+$('#btnToLevel2').addEventListener('click', () => transitionTo('scene-level2', initLevel2));
+
+/* =========================================================================
+   LEVEL 2 — ABOUT US
+   ========================================================================= */
+let l2Index = 0;
+function initLevel2(){
+  l2Index = 0;
+  renderL2Question();
+}
+function renderL2Question(){
+  const total = CONFIG.level2Questions.length;
+  const area = $('#l2QuizArea');
+  $('#l2ProgressLabel').textContent = `Soal ${l2Index+1} dari ${total}`;
+  $('#l2ProgressFill').style.width = `${(l2Index/total)*100}%`;
+
+  const item = CONFIG.level2Questions[l2Index];
+  area.innerHTML = '';
+  const qEl = document.createElement('div');
+  qEl.className = 'quiz-question';
+  qEl.textContent = item.q;
+  area.appendChild(qEl);
+
+  function advance(){
+    l2Index++;
+    if(l2Index >= total){
+      $('#l2ProgressFill').style.width = '100%';
+      transitionTo('scene-level2complete');
+    } else {
+      renderL2Question();
+    }
+  }
+
+  if(item.type === 'text'){
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'text-input';
+    input.placeholder = item.placeholder || 'Tulis jawabanmu...';
+    area.appendChild(input);
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'scene-footer';
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn';
+    nextBtn.textContent = 'Lanjut →';
+    nextBtn.addEventListener('click', () => { addLove(3); advance(); });
+    btnWrap.appendChild(nextBtn);
+    area.appendChild(btnWrap);
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'option-grid single-col';
+    item.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn text-only';
+      btn.innerHTML = `<span class="emoji">${opt.emoji}</span><span>${opt.label}</span>`;
+      btn.addEventListener('click', () => {
+        addLove(3);
+        setTimeout(advance, 300);
+      });
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  }
+}
+$('#btnToLevel3').addEventListener('click', () => transitionTo('scene-level3'));
+
+/* =========================================================================
+   LEVEL 3 — CATCH THE HEART (mini game)
+   ========================================================================= */
+let l3Score = 0, l3TimeLeft = 20, l3Interval=null, l3SpawnInterval=null, l3Playing=false;
+$('#btnStartCatch').addEventListener('click', startCatchGame);
+
+function startCatchGame(){
+  if(l3Playing) return;
+  l3Playing = true;
+  l3Score = 0; l3TimeLeft = 20;
+  $('#l3Score').textContent = l3Score;
+  $('#l3Timer').textContent = l3TimeLeft;
+  $('#btnStartCatch').style.display = 'none';
+  const frame = $('#l3GameFrame');
+  frame.innerHTML = '';
+
+  l3Interval = setInterval(() => {
+    l3TimeLeft--;
+    $('#l3Timer').textContent = l3TimeLeft;
+    if(l3TimeLeft <= 0) endCatchGame();
+  }, 1000);
+
+  l3SpawnInterval = setInterval(spawnFallingItem, 650);
+}
+
+function spawnFallingItem(){
+  const frame = $('#l3GameFrame');
+  if(!frame || !l3Playing) return;
+  const isGood = Math.random() > 0.3;
+  const item = document.createElement('div');
+  item.className = 'falling-item';
+  item.textContent = isGood ? choice(['❤️','💕','💖']) : '💔';
+  const fw = frame.offsetWidth;
+  item.style.left = rand(10, Math.max(10, fw-40)) + 'px';
+  const duration = rand(2.6, 4.2);
+  item.style.animationDuration = duration + 's';
+  frame.appendChild(item);
+
+  item.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const pts = isGood ? 10 : -2;
+    l3Score += pts;
+    if(l3Score < 0) l3Score = 0;
+    $('#l3Score').textContent = l3Score;
+    addLove(isGood ? 5 : 0);
+    showScoreFloat(item, pts);
+    item.remove();
+  });
+
+  setTimeout(() => { if(item.parentNode) item.remove(); }, duration*1000 + 50);
+}
+
+function showScoreFloat(refEl, pts){
+  const frame = $('#l3GameFrame');
+  const f = document.createElement('div');
+  f.className = 'score-float';
+  f.textContent = (pts>0?'+':'') + pts;
+  f.style.color = pts>0 ? '#e8b96a' : '#d9534f';
+  f.style.left = refEl.style.left;
+  f.style.top = refEl.style.top;
+  frame.appendChild(f);
+  setTimeout(()=> f.remove(), 850);
+}
+
+function endCatchGame(){
+  l3Playing = false;
+  clearInterval(l3Interval);
+  clearInterval(l3SpawnInterval);
+  $('#l3GameFrame').innerHTML = '';
+  $('#btnStartCatch').style.display = 'inline-flex';
+  $('#btnStartCatch').textContent = 'Main Lagi';
+
+  let title, sub;
+  if(l3Score >= 80){ title = 'Luar Biasa! 🏆'; sub = `Skor ${l3Score} — kamu jago menangkap cinta!`; }
+  else if(l3Score >= 40){ title = 'Keren! 🎯'; sub = `Skor ${l3Score} — banyak cinta yang berhasil kamu tangkap`; }
+  else { title = 'Lucu Juga! 😄'; sub = `Skor ${l3Score} — yang penting senang ya`; }
+  $('#l3ResultTitle').textContent = title;
+  $('#l3ResultSub').textContent = sub;
+  transitionTo('scene-level3complete');
+}
+$('#btnToLevel4').addEventListener('click', () => transitionTo('scene-level4', initMemoryGame));
+
+/* =========================================================================
+   LEVEL 4 — MEMORY GAME
+   ========================================================================= */
+let memoryFlipped = [], memoryMatchedCount = 0, memoryLock = false;
+function initMemoryGame(){
+  const symbols = ['❤️','🌸','🐻','🎁','💍','🎵'];
+  let cards = [...symbols, ...symbols];
+  cards = cards.sort(() => Math.random()-0.5);
+  memoryFlipped = []; memoryMatchedCount = 0; memoryLock = false;
+
+  const grid = $('#memoryGrid');
+  grid.innerHTML = '';
+  cards.forEach((sym, i) => {
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+    card.dataset.symbol = sym;
+    card.dataset.index = i;
+    card.innerHTML = `<span>${sym}</span>`;
+    card.addEventListener('click', () => onMemoryCardClick(card));
+    grid.appendChild(card);
+  });
+}
+function onMemoryCardClick(card){
+  if(memoryLock) return;
+  if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  memoryFlipped.push(card);
+
+  if(memoryFlipped.length === 2){
+    memoryLock = true;
+    const [a,b] = memoryFlipped;
+    if(a.dataset.symbol === b.dataset.symbol){
+      a.classList.add('matched'); b.classList.add('matched');
+      memoryMatchedCount++;
+      addLove(8);
+      memoryFlipped = []; memoryLock = false;
+      if(memoryMatchedCount === 6){
+        setTimeout(() => transitionTo('scene-level4complete'), 500);
+      }
+    } else {
+      setTimeout(() => {
+        a.classList.remove('flipped'); b.classList.remove('flipped');
+        memoryFlipped = []; memoryLock = false;
+      }, 750);
+    }
+  }
+}
+$('#btnToLevel5').addEventListener('click', () => transitionTo('scene-level5', initLuckyBox));
+
+/* =========================================================================
+   LEVEL 5 — LUCKY BOX
+   ========================================================================= */
+function initLuckyBox(){
+  const grid = $('#luckyBoxGrid');
+  grid.innerHTML = '';
+  const contents = ['🌹','😂','🐸','🍌','✨','😘','🎉','🍓','🦋'];
+  contents.sort(()=>Math.random()-0.5);
+  let opened = false;
+  contents.forEach((c) => {
+    const box = document.createElement('div');
+    box.className = 'lucky-box';
+    box.textContent = '🎁';
+    box.addEventListener('click', () => {
+      if(opened) return;
+      opened = true;
+      $$('.lucky-box', grid).forEach(b => { if(b!==box) b.style.opacity='0.4'; });
+      box.classList.add('opened');
+      box.textContent = c;
+      addLove(c === '🌹' ? 15 : 5);
+      setTimeout(() => transitionTo('scene-level6', initFunnyChoices), 1300);
+    });
+    grid.appendChild(box);
+  });
+}
+
+/* =========================================================================
+   LEVEL 6 — FUNNY CHOICES
+   ========================================================================= */
+let l6Index = 0;
+function initFunnyChoices(){
+  l6Index = 0;
+  renderFunnyChoice();
+}
+function renderFunnyChoice(){
+  const total = CONFIG.funnyChoices.length;
+  const content = $('#l6Content');
+  const item = CONFIG.funnyChoices[l6Index];
+  content.innerHTML = `
+    <div class="choice-scenario">
+      <div class="choice-emoji-big">${item.scenario.match(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu)?.[0] || '🐾'}</div>
+      <div class="quiz-question">${item.scenario}</div>
+    </div>
+  `;
+  const grid = document.createElement('div');
+  grid.className = 'choice-grid';
+  item.options.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span>${label}</span>`;
+    btn.addEventListener('click', () => {
+      addLove(4);
+      setTimeout(() => {
+        l6Index++;
+        if(l6Index >= total){
+          transitionTo('scene-level7', initRapidQuiz);
+        } else {
+          renderFunnyChoice();
+        }
+      }, 350);
+    });
+    grid.appendChild(btn);
+  });
+  content.appendChild(grid);
+}
+
+/* =========================================================================
+   LEVEL 7 — RAPID LOVE METER QUIZ
+   ========================================================================= */
+let l7Index = 0, l7Correct = 0, l7Timer = null, l7TimeLeft = 5;
+const RAPID_RING_CIRCUMFERENCE = 170;
+function initRapidQuiz(){
+  l7Index = 0; l7Correct = 0;
+  renderRapidQuestion();
+}
+function renderRapidQuestion(){
+  const total = CONFIG.rapidQuestions.length;
+  if(l7Index >= total){
+    const finalPct = Math.round((l7Correct/total)*100);
+    $('#l7FinalScore').textContent = finalPct;
+    transitionTo('scene-level7complete');
+    return;
+  }
+  $('#l7ProgressLabel').textContent = `Soal ${l7Index+1} dari ${total}`;
+  const area = $('#l7QuizArea');
+  area.innerHTML = `<div class="quiz-question">${CONFIG.rapidQuestions[l7Index]}</div>`;
+  const grid = document.createElement('div');
+  grid.className = 'option-grid';
+  ['Ya 💖','Tentu 😘'].forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = label;
+    btn.addEventListener('click', () => onRapidAnswer());
+    grid.appendChild(btn);
+  });
+  area.appendChild(grid);
+
+  l7TimeLeft = 5;
+  $('#rapidTimerNum').textContent = l7TimeLeft;
+  const ring = $('#rapidRing');
+  ring.style.strokeDashoffset = 0;
+  clearInterval(l7Timer);
+  const start = Date.now();
+  l7Timer = setInterval(() => {
+    const elapsed = (Date.now()-start)/1000;
+    const remaining = Math.max(0, 5-elapsed);
+    $('#rapidTimerNum').textContent = Math.ceil(remaining);
+    ring.style.strokeDashoffset = (elapsed/5)*RAPID_RING_CIRCUMFERENCE;
+    if(remaining <= 0){
+      clearInterval(l7Timer);
+      onRapidAnswer(true); // timeout, still counts as answered (no penalty—keep it sweet)
+    }
+  }, 80);
+}
+function onRapidAnswer(isTimeout){
+  clearInterval(l7Timer);
+  if(!isTimeout) l7Correct++;
+  else l7Correct += 0.5;
+  addLove(3);
+  l7Index++;
+  setTimeout(renderRapidQuestion, 150);
+}
+$('#btnToLevel8').addEventListener('click', () => transitionTo('scene-level8', initPuzzle));
+
+/* =========================================================================
+   LEVEL 8 — PHOTO PUZZLE (3x3 slide/swap puzzle)
+   ========================================================================= */
+let puzzleSelected = null, puzzleSolved = false;
+function initPuzzle(){
+  const board = $('#puzzleBoard');
+  board.innerHTML = '';
+  puzzleSelected = null; puzzleSolved = false;
+  const photoSrc = CONFIG.photos.puzzle;
+  let order = [0,1,2,3,4,5,6,7,8];
+  order = order.sort(()=>Math.random()-0.5);
+
+  order.forEach((correctPos, currentIndex) => {
+    const piece = document.createElement('div');
+    piece.className = 'puzzle-piece';
+    piece.dataset.correct = correctPos;
+    piece.dataset.current = currentIndex;
+    const col = correctPos % 3, row = Math.floor(correctPos/3);
+    if(photoSrc){
+      piece.style.backgroundImage = `url('${photoSrc}')`;
+      piece.style.backgroundPosition = `${col*50}% ${row*50}%`;
+    } else {
+      piece.style.background = `linear-gradient(135deg, hsl(${330+correctPos*4},55%,${78-row*4}%), hsl(${20+correctPos*6},70%,80%))`;
+      piece.innerHTML = `<span class="puzzle-placeholder-icon">${['❤️','💕','💗','💖','🌸','💞','💌','💓','💘'][correctPos]}</span>`;
+    }
+    piece.addEventListener('click', () => onPuzzlePieceClick(piece));
+    board.appendChild(piece);
+  });
+}
+function onPuzzlePieceClick(piece){
+  if(puzzleSolved) return;
+  if(!puzzleSelected){
+    puzzleSelected = piece;
+    piece.classList.add('selected-piece');
+  } else if(puzzleSelected === piece){
+    piece.classList.remove('selected-piece');
+    puzzleSelected = null;
+  } else {
+    // swap backgroundImage/position/correct data and innerHTML between the two pieces visually
+    swapPieceVisuals(puzzleSelected, piece);
+    puzzleSelected.classList.remove('selected-piece');
+    puzzleSelected = null;
+    checkPuzzleSolved();
+  }
+}
+function swapPieceVisuals(a,b){
+  const tempBg = a.style.backgroundImage, tempPos = a.style.backgroundPosition, tempBgColor = a.style.background;
+  const tempHTML = a.innerHTML, tempCorrect = a.dataset.correct;
+
+  a.style.backgroundImage = b.style.backgroundImage;
+  a.style.backgroundPosition = b.style.backgroundPosition;
+  if(!b.style.backgroundImage) a.style.background = b.style.background;
+  a.innerHTML = b.innerHTML;
+  a.dataset.correct = b.dataset.correct;
+
+  b.style.backgroundImage = tempBg;
+  b.style.backgroundPosition = tempPos;
+  if(!tempBg) b.style.background = tempBgColor;
+  b.innerHTML = tempHTML;
+  b.dataset.correct = tempCorrect;
+}
+function checkPuzzleSolved(){
+  const pieces = $$('.puzzle-piece');
+  let solved = true;
+  pieces.forEach((p, i) => { if(parseInt(p.dataset.correct) !== i) solved = false; });
+  if(solved){
+    puzzleSolved = true;
+    addLove(20);
+    pieces.forEach(p => p.style.outline = '2px solid var(--gold)');
+    setTimeout(() => transitionTo('scene-surprise', initSurprise), 700);
+  }
+}
+$('#btnSkipPuzzle').addEventListener('click', () => transitionTo('scene-surprise', initSurprise));
+
+/* =========================================================================
+   LEVEL 9 — SURPRISE PHOTO REVEAL
+   ========================================================================= */
+function initSurprise(){
+  spawnStars($('#surpriseStars'), 70);
+  const textEl = $('#surpriseText1');
+  const frame = $('#photoFrame');
+  const btn = $('#btnAfterSurprise');
+  frame.style.display = 'none';
+  btn.style.display = 'none';
+  textEl.style.display='block';
+  textEl.classList.remove('show');
+  void textEl.offsetWidth;
+  textEl.classList.add('show');
+  textEl.textContent = choice(CONFIG.surpriseLines);
+
+  setTimeout(() => {
+    textEl.style.display = 'none';
+    frame.style.display = 'flex';
+    const src = CONFIG.photos.surprise;
+    if(src){
+      frame.innerHTML = `<img src="${src}" alt="kita">`;
+    }
+    addLove(10);
+    setTimeout(() => { btn.style.display='inline-flex'; btn.style.transition='opacity .6s'; btn.style.opacity='1'; }, 1600);
+  }, 1800);
+}
+$('#btnAfterSurprise').addEventListener('click', () => transitionTo('scene-letter', initLetter));
+
+/* =========================================================================
+   LEVEL 10 — LOVE LETTER (typing effect)
+   ========================================================================= */
+let letterTimeout = null, letterDone = false;
+function initLetter(){
+  const el = $('#letterText');
+  const text = CONFIG.loveLetter;
+  el.innerHTML = '<span class="letter-cursor"></span>';
+  letterDone = false;
+  $('#btnAfterLetter').style.display = 'none';
+  $('#skipLetterHint').style.display = 'block';
+
+  let i = 0;
+  function typeChar(){
+    if(letterDone) return;
+    if(i >= text.length){
+      finishLetter();
+      return;
+    }
+    const visible = text.slice(0, i+1);
+    el.innerHTML = escapeHTML(visible) + '<span class="letter-cursor"></span>';
+    i++;
+    letterTimeout = setTimeout(typeChar, 28);
+  }
+  typeChar();
+
+  function skipHandler(){
+    if(!letterDone){
+      clearTimeout(letterTimeout);
+      el.innerHTML = escapeHTML(text);
+      finishLetter();
+    }
+  }
+  $('#scene-letter').onclick = skipHandler;
+}
+function finishLetter(){
+  letterDone = true;
+  $('#skipLetterHint').style.display = 'none';
+  const btn = $('#btnAfterLetter');
+  btn.style.display = 'inline-flex';
+  btn.style.opacity = '0';
+  setTimeout(()=>{ btn.style.transition='opacity .6s'; btn.style.opacity='1'; }, 80);
+}
+function escapeHTML(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+$('#btnAfterLetter').addEventListener('click', (e) => {
+  e.stopPropagation();
+  transitionTo('scene-finalq', initFinalQuestion);
+});
+
+/* =========================================================================
+   FINAL QUESTION — "Tidak" button runs away
+   ========================================================================= */
+let noBtnMoveCount = 0;
+function initFinalQuestion(){
+  $('#finalQuestionText').textContent = CONFIG.finalQuestion;
+  const noBtn = $('#btnNo');
+  noBtnMoveCount = 0;
+  noBtn.style.position = 'fixed';
+  positionNoBtnInitial();
+
+  noBtn.onmouseenter = dodgeNoBtn;
+  noBtn.onclick = dodgeNoBtn; // for touch devices, tapping also dodges
+  noBtn.ontouchstart = (e) => { e.preventDefault(); dodgeNoBtn(); };
+}
+function positionNoBtnInitial(){
+  const noBtn = $('#btnNo');
+  const yesBtn = $('#btnYes');
+  const yesRect = yesBtn.getBoundingClientRect();
+  noBtn.style.left = (yesRect.right + 16) + 'px';
+  noBtn.style.top = yesRect.top + 'px';
+}
+function dodgeNoBtn(){
+  noBtnMoveCount++;
+  const noBtn = $('#btnNo');
+  const w = window.innerWidth, h = window.innerHeight;
+  const btnW = noBtn.offsetWidth || 100, btnH = noBtn.offsetHeight || 48;
+  const newX = rand(20, w-btnW-20);
+  const newY = rand(100, h-btnH-40);
+  noBtn.style.left = newX + 'px';
+  noBtn.style.top = newY + 'px';
+  noBtn.textContent = choice(['Tidak','Yakin?','Coba lagi?','Hmm 🤔','Tidak 😳','Masa sih?']);
+  if(noBtnMoveCount > 6){
+    noBtn.style.opacity = Math.max(0.15, 1 - (noBtnMoveCount-6)*0.12);
+  }
+}
+$('#btnYes').addEventListener('click', () => transitionTo('scene-ending', initEnding));
+
+/* =========================================================================
+   ENDING — confetti, fireworks, balloons
+   ========================================================================= */
+function initEnding(){
+  $('#endingTitle').textContent = CONFIG.endingTitle;
+  $('#endingSub').textContent = CONFIG.endingSub;
+  const layer = $('#endingEffects');
+  layer.innerHTML = '';
+
+  // confetti
+  const colors = ['#d98ea0','#e8b96a','#fff3f0','#6b2737','#f0bfc9'];
+  for(let i=0;i<70;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = rand(0,100)+'%';
+    c.style.background = choice(colors);
+    c.style.animationDuration = rand(3,6)+'s';
+    c.style.animationDelay = rand(0,2)+'s';
+    c.style.transform = `rotate(${rand(0,360)}deg)`;
+    layer.appendChild(c);
+  }
+  // balloons
+  for(let i=0;i<8;i++){
+    const b = document.createElement('div');
+    b.className = 'balloon';
+    b.textContent = choice(['🎈','💗']);
+    b.style.left = rand(5,90)+'%';
+    b.style.animationDuration = rand(8,13)+'s';
+    b.style.animationDelay = rand(0,4)+'s';
+    layer.appendChild(b);
+  }
+  // fireworks bursts
+  function burst(){
+    const x = rand(15,85), y = rand(15,55);
+    const color = choice(['#e8b96a','#d98ea0','#fff3f0','#f0bfc9']);
+    for(let i=0;i<18;i++){
+      const spark = document.createElement('div');
+      spark.className = 'firework-spark';
+      spark.style.left = x+'%'; spark.style.top = y+'%';
+      spark.style.background = color;
+      const angle = (i/18)*2*Math.PI;
+      const dist = rand(40,90);
+      spark.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+      spark.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+      layer.appendChild(spark);
+      setTimeout(()=> spark.remove(), 1100);
+    }
+  }
+  burst();
+  const burstInterval = setInterval(burst, 1400);
+  setTimeout(() => clearInterval(burstInterval), 9000);
+}
+
+</script>
+</body>
+</html>
